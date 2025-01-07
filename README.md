@@ -33,6 +33,7 @@ This project creates an Azure AI Studio hub, project and connected resources inc
 * [Development server](#development-server)
 * [Guidance](#guidance)
 * [Resources](#resources)
+* [Testing](#testing)
 
 ## Features
 
@@ -190,6 +191,46 @@ Make sure you first [deployed the app](#deploying) to Azure before running the d
 5. Click 'http://127.0.0.1:8000' in the terminal, which should open a new tab in the browser.
 
 6. Enter your message in the box.
+
+## Testing
+
+### Setting up the development environment
+
+1. Create a [Python virtual environment](https://docs.python.org/3/tutorial/venv.html#creating-virtual-environments) and activate it.
+
+    On Windows:
+
+    ```shell
+    py -3 -m venv .venv
+    .venv\scripts\activate
+    ```
+
+    On Linux:
+
+    ```shell
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+
+2. Navigate to the project directory:
+
+    ```shell
+    cd <project-directory>
+    ```
+
+3. Install required Python packages:
+
+    ```shell
+    python -m pip install -r requirements-dev.txt
+    ```
+
+### Running tests
+
+1. Run the tests with coverage:
+
+    ```shell
+    pytest --cov=src
+    ```
 
 ## Guidance
 
