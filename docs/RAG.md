@@ -3,7 +3,7 @@
 # Retrieval-Augmented Generation (RAG) Setup Guide
 ## Overview
 The Retrieval-Augmented Generation (RAG) feature helps improve the responses from your application by combining the power of large language models (LLMs) with extra context retrieved from an external data source. Simply put, when you ask a question, the application first searches through a set of relevant documents (stored as embeddings) and then uses this context to provide a more accurate and relevant response. If no relevant context is found, the application returns the LLM response directly.
-This RAG feature is optional and enabled by default. If you prefer not to use it, simply set the environment variable `USE_SEARCH_SERVICE` to `false`. Doing so will also skip creating the Azure AI Search resources.
+This RAG feature is optional and enabled by default. If you prefer not to use it, simply set the local environment variable `USE_SEARCH_SERVICE` to `false`. Doing so will also skip creating the Azure AI Search resources by `azd up` command.
 
 ## How does RAG work in this application?
 In our provided example, the application includes a sample dataset containing information about hiking products. This data was split into sentences, and each sentence was transformed into numerical representations called embeddings. These embeddings were created using OpenAI's `text-embedding-3-small` model with `dimensions=100`. The resulting embeddings file (`embeddings.csv`) is located in the `api/data` folder.
@@ -38,11 +38,26 @@ await search_index_manager.build_embeddings_file(
 - `sentences_per_embedding  parameter`, specifies the number of sentences used to construct the embedding. The larger this number, the broader the context that will be identified during the similarity search.
 
 ## Deploying the Application with RAG enabled
-To deploy your application using the RAG feature, set the following environment variables:
+To deploy your application using the RAG feature, set the following environment variables locally:
+In power shell:
 ```
-USE_SEARCH_SERVICE=true
-AZURE_AI_SEARCH_INDEX_NAME=index_sample
-AZURE_AI_EMBED_DEPLOYMENT_NAME=text-embedding-3-small
+$env:USE_SEARCH_SERVICE="true"
+$env:AZURE_AI_SEARCH_INDEX_NAME="index_sample"
+$env:AZURE_AI_EMBED_DEPLOYMENT_NAME="text-embedding-3-small"
+```
+
+In bash:
+```
+export USE_SEARCH_SERVICE="true"
+export AZURE_AI_SEARCH_INDEX_NAME="index_sample"
+export AZURE_AI_EMBED_DEPLOYMENT_NAME="text-embedding-3-small"
+```
+
+In cmd:
+```
+set USE_SEARCH_SERVICE=true
+set AZURE_AI_SEARCH_INDEX_NAME=index_sample
+set AZURE_AI_EMBED_DEPLOYMENT_NAME=text-embedding-3-small
 ```
 
 - `USE_SEARCH_SERVICE`: Enables (default) or disables RAG.
