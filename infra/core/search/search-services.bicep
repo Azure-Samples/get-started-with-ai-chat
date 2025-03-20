@@ -8,7 +8,7 @@ param sku object = {
 }
 
 param authOptions object = {}
-param disableLocalAuth bool = false
+param disableLocalAuth bool = true
 param disabledDataExfiltrationOptions array = []
 param encryptionWithCmk object = {
   enforcement: 'Unspecified'
@@ -47,7 +47,6 @@ resource search 'Microsoft.Search/searchServices@2021-04-01-preview' = {
   // The free tier does not support managed identity
   identity: searchIdentityProvider
   properties: {
-    authOptions: authOptions
     disableLocalAuth: disableLocalAuth
     disabledDataExfiltrationOptions: disabledDataExfiltrationOptions
     encryptionWithCmk: encryptionWithCmk

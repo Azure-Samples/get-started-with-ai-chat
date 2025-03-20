@@ -64,16 +64,13 @@ resource hub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' =
     name: aiServicesConnectionName
     properties: {
       category: 'AIServices'
-      authType: 'ApiKey'
+      authType: 'AAD'
       isSharedToAll: true
       target: aiService.properties.endpoint
       metadata: {
-        ApiVersion: '2023-07-01-preview'
+        ApiVersion: '2025-01-01-preview'
         ApiType: 'azure'
         ResourceId: aiService.id
-      }
-      credentials: {
-        key: aiService.listKeys().key1
       }
     }
   }
@@ -82,16 +79,13 @@ resource hub 'Microsoft.MachineLearningServices/workspaces@2024-07-01-preview' =
     name: aiServicesContentSafetyConnectionName
     properties: {
       category: 'AzureOpenAI'
-      authType: 'ApiKey'
+      authType: 'AAD'
       isSharedToAll: true
       target: aiService.properties.endpoints['Content Safety']
       metadata: {
-        ApiVersion: '2023-07-01-preview'
+        ApiVersion: '2025-01-01-preview'
         ApiType: 'azure'
         ResourceId: aiService.id
-      }
-      credentials: {
-        key: aiService.listKeys().key1
       }
     }
   }
