@@ -152,6 +152,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@microsoft/ai-chat-protocol@1.0.0-beta.20240610.1/dist/iife/index.js"></script>
 
     <script>
+        let currentSessionId = null;
         const form = document.getElementById("chat-form");
         const messageInput = document.getElementById("message");
         const targetContainer = document.getElementById("messages");
@@ -159,7 +160,7 @@
         const assistantTemplate = document.querySelector('#message-template-assistant');
         const placeholderWrapper = document.getElementById("placeholder-wrapper");
         const converter = new showdown.Converter();
-        const messages = [];
+        let messages = [];
 
         const client = new ChatProtocol.AIChatProtocolClient("/chat");
 
@@ -184,6 +185,8 @@
                 "role": "user",
                 "content": message
             });
+
+            saveMessages(currentSessionId, messages);
 
             try {
                 const result = await client.getStreamedCompletion(messages);
@@ -210,6 +213,8 @@
                     "role": "assistant",
                     "content": answer
                 });
+
+                saveMessages(currentSessionId, messages);
 
                 messageInput.value = "";
             } catch (error) {
@@ -240,11 +245,28 @@
             localStorage.setItem('chatHistory', JSON.stringify(chats));
         };
 
+        // Save messages to localStorage
+        const saveMessages = (sessionId, messages) => {
+            localStorage.setItem(`chat_${sessionId}`, JSON.stringify(messages));
+        };
+
+        // Load messages from localStorage
+        const loadMessages = (sessionId) => {
+            return JSON.parse(localStorage.getItem(`chat_${sessionId}`)) || [];
+        };
+
         newChatButton.addEventListener('click', () => {
+            // Generate new session ID
+            const chatId = Date.now().toString();
+            currentSessionId = chatId;
+
+            // Clear current chat window
+            targetContainer.innerHTML = '';
+            messages = [];
+
             // Add new chat item to the history
             const chatItem = document.createElement('div');
-            chatItem.classList.add('chat-item');
-            const chatId = Date.now().toString();
+            chatItem.classList.add('chat-item', 'active');
             chatItem.innerText = 'New Chat';
             chatItem.dataset.id = chatId;
             chatHistory.appendChild(chatItem);
@@ -253,12 +275,28 @@
             const storedChats = JSON.parse(localStorage.getItem('chatHistory')) || [];
             storedChats.push({ id: chatId, title: 'New Chat' });
             saveChatHistory(storedChats);
+
+            // Highlight active chat
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            chatItem.classList.add('active');
         });
 
         deleteAllButton.addEventListener('click', () => {
             // Clear all chat history
             chatHistory.innerHTML = '';
             localStorage.removeItem('chatHistory');
+
+            // Clear all chat sessions
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('chat_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // Clear current chat window
+            targetContainer.innerHTML = '';
+            messages = [];
+            currentSessionId = null;
         });
 
         chatHistory.addEventListener('click', (e) => {
@@ -267,9 +305,21 @@
                 document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
                 e.target.classList.add('active');
 
-                // Load chat session (implement loading logic here)
+                // Load chat session
                 const chatId = e.target.dataset.id;
-                console.log('Load chat session with ID:', chatId);
+                currentSessionId = chatId;
+                messages = loadMessages(chatId);
+
+                // Clear current chat window
+                targetContainer.innerHTML = '';
+
+                // Display loaded messages
+                messages.forEach(message => {
+                    const template = message.role === 'user' ? userTemplate : assistantTemplate;
+                    const templateClone = template.content.cloneNode(true);
+                    templateClone.querySelector(".message-content").innerText = message.content;
+                    targetContainer.appendChild(templateClone);
+                });
             }
         });
 
