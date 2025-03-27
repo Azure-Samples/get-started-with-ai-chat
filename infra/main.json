@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "1284503636762164682"
+      "templateHash": "6339947437468843766"
     }
   },
   "parameters": {
@@ -178,43 +178,37 @@
       ],
       "metadata": {
         "description": "Format of the chat model to deploy"
-      },
-      "defaultValue": "OpenAI"
+      }
     },
     "chatModelName": {
       "type": "string",
       "metadata": {
         "description": "Name of the chat model to deploy"
-      },
-      "defaultValue": "gpt-4o-mini"
+      }
     },
     "chatDeploymentName": {
       "type": "string",
       "metadata": {
         "description": "Name of the model deployment"
-      },
-      "defaultValue": "gpt-4o-mini"
+      }
     },
     "chatModelVersion": {
       "type": "string",
       "metadata": {
         "description": "Version of the chat model to deploy"
-      },
-      "defaultValue": "2024-07-18"
+      }
     },
     "chatDeploymentSku": {
       "type": "string",
       "metadata": {
         "description": "Sku of the chat deployment"
-      },
-      "defaultValue": "GlobalStandard"
+      }
     },
     "chatDeploymentCapacity": {
       "type": "int",
       "metadata": {
         "description": "Capacity of the chat deployment"
-      },
-      "defaultValue": 30
+      }
     },
     "embedModelFormat": {
       "type": "string",
@@ -224,50 +218,43 @@
       ],
       "metadata": {
         "description": "Format of the embedding model to deploy"
-      },
-      "defaultValue": "OpenAI"
+      }
     },
     "embedModelName": {
       "type": "string",
       "metadata": {
         "description": "Name of the embedding model to deploy"
-      },
-      "defaultValue": "text-embedding-3-small"
+      }
     },
     "embeddingDeploymentName": {
       "type": "string",
       "metadata": {
         "description": "Name of the embedding model deployment"
-      },
-      "defaultValue": "text-embedding-3-small"
+      }
     },
     "embeddingDeploymentDimensions": {
       "type": "string",
       "metadata": {
         "description": "Embedding model dimensionality"
-      },
-      "defaultValue": "100"
+      }
     },
     "embedModelVersion": {
       "type": "securestring",
       "metadata": {
         "description": "Version of the embedding model to deploy"
-      },
-      "defaultValue": "1"
+      }
     },
     "embedDeploymentSku": {
       "type": "string",
       "metadata": {
         "description": "Sku of the embeddings model deployment"
-      },
-      "defaultValue": "Standard"
+      }
     },
     "embedDeploymentCapacity": {
       "type": "int",
       "metadata": {
         "description": "Capacity of the embedding deployment"
-      },
-      "defaultValue": 30
+      }
     },
     "useContainerRegistry": {
       "type": "bool",
@@ -432,7 +419,7 @@
     "tags": {
       "azd-env-name": "[parameters('environmentName')]"
     },
-    "aiDeployments": [
+    "aiChatModel": [
       {
         "name": "[parameters('chatDeploymentName')]",
         "model": {
@@ -444,7 +431,9 @@
           "name": "[parameters('chatDeploymentSku')]",
           "capacity": "[parameters('chatDeploymentCapacity')]"
         }
-      },
+      }
+    ],
+    "aiEmbeddingModel": [
       {
         "name": "[parameters('embeddingDeploymentName')]",
         "model": {
@@ -458,6 +447,7 @@
         }
       }
     ],
+    "aiDeployments": "[concat(variables('aiChatModel'), if(parameters('useSearchService'), variables('aiEmbeddingModel'), createArray()))]",
     "logAnalyticsWorkspaceResolvedName": "[if(not(parameters('useApplicationInsights')), '', if(not(empty(parameters('logAnalyticsWorkspaceName'))), parameters('logAnalyticsWorkspaceName'), format('{0}{1}', variables('abbrs').operationalInsightsWorkspaces, variables('resourceToken'))))]",
     "containerRegistryResolvedName": "[if(not(parameters('useContainerRegistry')), '', if(not(empty(parameters('containerRegistryName'))), parameters('containerRegistryName'), format('{0}{1}', variables('abbrs').containerRegistryRegistries, variables('resourceToken'))))]",
     "resolvedSearchServiceName": "[if(not(parameters('useSearchService')), '', if(not(empty(parameters('searchServiceName'))), parameters('searchServiceName'), format('{0}{1}', variables('abbrs').searchSearchServices, variables('resourceToken'))))]",
@@ -3115,8 +3105,7 @@
                             }
                           },
                           "variables": {
-                            "searchIdentityProvider": "[if(equals(parameters('sku').name, 'free'), null(), createObject('type', 'SystemAssigned'))]",
-                            "baseUrl": "https://raw.githubusercontent.com/Azure-Samples/get-started-with-ai-chat/main/"
+                            "searchIdentityProvider": "[if(equals(parameters('sku').name, 'free'), null(), createObject('type', 'SystemAssigned'))]"
                           },
                           "resources": [
                             {
@@ -4554,7 +4543,7 @@
           "containerRegistryName": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'container-apps'), '2022-09-01').outputs.registryName.value]"
           },
-          "projectConnectionString": "[if(empty(if(empty(parameters('aiExistingProjectConnectionString')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], '')), createObject('value', parameters('aiExistingProjectConnectionString')), createObject('value', format('{0};{1};{2};{3}', if(empty(parameters('aiExistingProjectConnectionString')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], ''), subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName'))), variables('projectName'))))]",
+          "projectConnectionString": "[if(empty(if(and(and(empty(parameters('aiExistingProjectConnectionString')), not(empty(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value))), contains(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], '')), createObject('value', parameters('aiExistingProjectConnectionString')), createObject('value', format('{0};{1};{2};{3}', if(and(and(empty(parameters('aiExistingProjectConnectionString')), not(empty(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value))), contains(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], ''), subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName'))), variables('projectName'))))]",
           "chatDeploymentName": {
             "value": "[parameters('chatDeploymentName')]"
           },
@@ -6310,7 +6299,7 @@
     },
     "AZURE_AIPROJECT_CONNECTION_STRING": {
       "type": "string",
-      "value": "[if(empty(if(empty(parameters('aiExistingProjectConnectionString')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], '')), parameters('aiExistingProjectConnectionString'), format('{0};{1};{2};{3}', if(empty(parameters('aiExistingProjectConnectionString')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], ''), subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName'))), variables('projectName')))]"
+      "value": "[if(empty(if(and(and(empty(parameters('aiExistingProjectConnectionString')), not(empty(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value))), contains(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], '')), parameters('aiExistingProjectConnectionString'), format('{0};{1};{2};{3}', if(and(and(empty(parameters('aiExistingProjectConnectionString')), not(empty(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value))), contains(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')), split(reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName')))), 'Microsoft.Resources/deployments', 'ai'), '2022-09-01').outputs.discoveryUrl.value, '/')[2], ''), subscription().subscriptionId, if(not(empty(parameters('resourceGroupName'))), parameters('resourceGroupName'), format('{0}{1}', variables('abbrs').resourcesResourceGroups, parameters('environmentName'))), variables('projectName')))]"
     },
     "AZURE_AI_CHAT_DEPLOYMENT_NAME": {
       "type": "string",
