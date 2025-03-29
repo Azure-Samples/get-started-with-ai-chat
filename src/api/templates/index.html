@@ -13,12 +13,63 @@
         integrity="sha256-axRDISYf7Hht1KhcMnfDV2nq7hD/8Q9Rxa0YlW/o3NU=" crossorigin="anonymous">
     <link href="/static/styles.css" rel="stylesheet" type="text/css">
     <style>
+        #sidebar {
+            width: 260px;
+            background-color: #202123; /* Sidebar background */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+            border-right: 1px solid #2f2f2f;
+            color: #d1d5db; /* Light text */
+        }
+    
+        #sidebar .chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+    
+        #sidebar .chat-item {
+            padding: 10px;
+            cursor: pointer;
+            color: #d1d5db;
+        }
+    
+        #sidebar .chat-item.active {
+            background-color: #343541;
+        }
+    
+        #sidebar .chat-item:hover {
+            background-color: #2f2f2f;
+        }
+    
+        #sidebar .sidebar-footer {
+            padding: 10px;
+            border-top: 1px solid #2f2f2f;
+        }
+    
+        #main-chat {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            margin-left: 260px;
+            background-color: #343541; /* Main chat background */
+            color: #d1d5db;
+        }
+    
         #messages {
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
+            overflow-y: auto;
         }
+    
         #placeholder-wrapper {
             display: flex;
             flex-grow: 1;
@@ -26,28 +77,66 @@
             align-items: center;
             width: 100%;
         }
+    
         #placeholder-message {
-            color: #6c757d;
+            color: #a1a1aa; /* Dimmed text */
         }
+    
         .header {
             font-size: 2em;
             font-weight: bold;
             margin-bottom: 10px;
         }
+    
         .message-content {
             text-align: left;
+            color: #d1d5db !important; /* Ensure message text is light and overrides defaults */
+            font-size: 1rem;
         }
-    </style>
+    
+        .toast-header {
+            background-color: #2f2f2f;
+            color: #d1d5db;
+        }
+    
+        .toast-body {
+            background-color: #444654;
+            color: #d1d5db !important;
+        }
+    
+        #chat-area {
+            padding: 10px;
+            background-color: #40414f; /* Input area background */
+            border-top: 1px solid #2f2f2f;
+        }
+    
+        input.form-control {
+            background-color: #2a2b32;
+            color: #ffffff;
+            border: 1px solid #555;
+        }
+    
+        input::placeholder {
+            color: #999;
+        }
+    </style>     
 </head>
 <body>
-    <main class="h-100 mh-100 d-flex flex-column overflow-hidden justify-content-start">
-
+    <div id="sidebar">
+        <div class="chat-history">
+            <!-- Chat history items will be dynamically added here -->
+        </div>
+        <div class="sidebar-footer">
+            <button id="new-chat" class="btn btn-primary w-100 mb-2">+ New Chat</button>
+            <button id="delete-all" class="btn btn-danger w-100">Delete All</button>
+        </div>
+    </div>
+    <div id="main-chat" class="h-100 mh-100 d-flex flex-column overflow-hidden justify-content-start">
         <div id="messages" class="px-4 pb-4 pt-2 flex-grow-1 overflow-y-auto overflow-x-hidden align-items-stretch">
             <div id="placeholder-wrapper">
                 <div id="placeholder-message" class="text-center text-muted my-3">
-                    <div class="header">Get Started with Chat Using Azure AI Foundry</div>
-                    Type your message in the text box below. You can start with a simple "Hey" or try something fun like "Tell me a joke."<br>
-                    If you have enabled Retrieval-Augmented Generation model, you can ask something specific about the data you used to build the index.
+                    <div class="header">What can I help with?</div>
+                    Ask Anything
                 </div>
             </div>
 
@@ -81,8 +170,6 @@
                         </div>
                 </div>
             </template>
-
-
         </div>
         <div id="chat-area" class="text-light px-4 py-2 rounded-top-5 text-dark d-flex flex-column justify-content-center background-user">
             <form id="chat-form">
@@ -96,11 +183,12 @@
                 </div>
             </form>
         </div>
-    </main>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@microsoft/ai-chat-protocol@1.0.0-beta.20240610.1/dist/iife/index.js"></script>
 
     <script>
+        let currentSessionId = null;
         const form = document.getElementById("chat-form");
         const messageInput = document.getElementById("message");
         const targetContainer = document.getElementById("messages");
@@ -108,7 +196,7 @@
         const assistantTemplate = document.querySelector('#message-template-assistant');
         const placeholderWrapper = document.getElementById("placeholder-wrapper");
         const converter = new showdown.Converter();
-        const messages = [];
+        let messages = [];
 
         const client = new ChatProtocol.AIChatProtocolClient("/chat");
 
@@ -133,6 +221,8 @@
                 "role": "user",
                 "content": message
             });
+
+            saveMessages(currentSessionId, messages);
 
             try {
                 const result = await client.getStreamedCompletion(messages);
@@ -160,11 +250,117 @@
                     "content": answer
                 });
 
+                saveMessages(currentSessionId, messages);
+
                 messageInput.value = "";
             } catch (error) {
                 messageDiv.innerHTML = "Error: " + error;
             }
         });
+
+        // Sidebar functionality
+        const chatHistory = document.querySelector('.chat-history');
+        const newChatButton = document.getElementById('new-chat');
+        const deleteAllButton = document.getElementById('delete-all');
+
+        // Load chat history from localStorage
+        const loadChatHistory = () => {
+            const storedChats = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            chatHistory.innerHTML = '';
+            storedChats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.classList.add('chat-item');
+                chatItem.innerText = chat.title;
+                chatItem.dataset.id = chat.id;
+                chatHistory.appendChild(chatItem);
+            });
+        };
+
+        // Save chat history to localStorage
+        const saveChatHistory = (chats) => {
+            localStorage.setItem('chatHistory', JSON.stringify(chats));
+        };
+
+        // Save messages to localStorage
+        const saveMessages = (sessionId, messages) => {
+            localStorage.setItem(`chat_${sessionId}`, JSON.stringify(messages));
+        };
+
+        // Load messages from localStorage
+        const loadMessages = (sessionId) => {
+            return JSON.parse(localStorage.getItem(`chat_${sessionId}`)) || [];
+        };
+
+        newChatButton.addEventListener('click', () => {
+            // Generate new session ID
+            const chatId = Date.now().toString();
+            currentSessionId = chatId;
+
+            // Clear current chat window
+            targetContainer.innerHTML = '';
+            messages = [];
+
+            // Add new chat item to the history
+            const chatItem = document.createElement('div');
+            chatItem.classList.add('chat-item', 'active');
+            chatItem.innerText = 'New Chat';
+            chatItem.dataset.id = chatId;
+            chatHistory.appendChild(chatItem);
+
+            // Save to localStorage
+            const storedChats = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            storedChats.push({ id: chatId, title: 'New Chat' });
+            saveChatHistory(storedChats);
+
+            // Highlight active chat
+            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+            chatItem.classList.add('active');
+        });
+
+        deleteAllButton.addEventListener('click', () => {
+            // Clear all chat history
+            chatHistory.innerHTML = '';
+            localStorage.removeItem('chatHistory');
+
+            // Clear all chat sessions
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('chat_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // Clear current chat window
+            targetContainer.innerHTML = '';
+            messages = [];
+            currentSessionId = null;
+        });
+
+        chatHistory.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chat-item')) {
+                // Highlight active chat
+                document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // Load chat session
+                const chatId = e.target.dataset.id;
+                currentSessionId = chatId;
+                messages = loadMessages(chatId);
+
+                // Clear current chat window
+                targetContainer.innerHTML = '';
+
+                // Display loaded messages
+                messages.forEach(message => {
+                    const template = message.role === 'user' ? userTemplate : assistantTemplate;
+                    const templateClone = template.content.cloneNode(true);
+                    templateClone.querySelector(".message-content").innerText = message.content;
+                    targetContainer.appendChild(templateClone);
+                });
+            }
+        });
+
+        // Initial load of chat history
+        loadChatHistory();
     </script>
 </body>
 </html>
