@@ -7,35 +7,14 @@ param environmentName string
 
 @minLength(1)
 @description('Location for all resources')
-// Look for desired models on the availability table:
-// https://learn.microsoft.com/azure/ai-services/openai/concepts/models#global-standard-model-availability
-@allowed([
-  'australiaeast'
-  'brazilsouth'
-  'canadaeast'
-  'eastus'
-  'eastus2'
-  'francecentral'
-  'germanywestcentral'
-  'japaneast'
-  'koreacentral'
-  'northcentralus'
-  'norwayeast'
-  'polandcentral'
-  'spaincentral'
-  'southafricanorth'
-  'southcentralus'
-  'southindia'
-  'swedencentral'
-  'switzerlandnorth'
-  'uksouth'
-  'westeurope'
-  'westus'
-  'westus3'
-])
 @metadata({
   azd: {
     type: 'location'
+    // quota-validation for ai models: gpt-4o-mini & text-embedding-3-small
+    usageName: [
+      'OpenAI.GlobalStandard.gpt-4o-mini,30'
+      'OpenAI.GlobalStandard.text-embedding-3-small,30'
+    ]
   }
 })
 param location string
