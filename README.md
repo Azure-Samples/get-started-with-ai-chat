@@ -70,7 +70,7 @@ If you are using one of the [Quick Deploy options](#quick-deploy), open the code
 If you are not using any of the Quick Deploy options, download the project code:
 
 ```shell
-git clone https://github.com/Azure-Samples/get-started-with-ai-chat.git
+azd init -t get-started-with-ai-chat
 ```
 At this point you could make changes to the code if required. However, no changes are needed to deploy and test the app as shown in the next step.
 
