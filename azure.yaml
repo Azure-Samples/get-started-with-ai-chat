@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.1/azure.yaml.json
 
 name: azd-get-started-with-ai-chat
 metadata:
@@ -45,3 +45,13 @@ pipeline:
     - AZURE_AI_EMBED_MODEL_FORMAT
     - AZURE_AI_EMBED_MODEL_VERSION
     - AZURE_EXISTING_AIPROJECT_CONNECTION_STRING
+
+projects:
+  - name: webapp
+    path: src
+    language: python
+    host: containerapp
+  - name: infra
+    path: infra
+    language: bicep
+    host: none
