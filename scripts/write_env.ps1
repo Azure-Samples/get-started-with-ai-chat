@@ -5,6 +5,7 @@ $envFilePath = "src\.env"
 Set-Content -Path $envFilePath -Value ""
 
 # Append new values to the .env file
+$azureEnvName = azd env get-value AZURE_ENV_NAME
 $aiProjectResourceId = azd env get-value AZURE_EXISTING_AIPROJECT_RESOURCE_ID
 $aiProjectEndpoint = azd env get-value AZURE_EXISTING_AIPROJECT_ENDPOINT
 $azureAiChatDeploymentName = azd env get-value AZURE_AI_CHAT_DEPLOYMENT_NAME
@@ -31,9 +32,8 @@ Add-Content -Path $envFilePath -Value "AZURE_TENANT_ID=$azureTenantId"
 Add-Content -Path $envFilePath -Value "ENABLE_AZURE_MONITOR_TRACING=$enableAzureMonitorTracing"
 Add-Content -Path $envFilePath -Value "AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED=$azureTracingGenAIContentRecordingEnabled"
 
-Write-Host "Web app URL:"
+Write-Host "Please visit web app URL:"
 Write-Host $serviceAPIUri -ForegroundColor Cyan
-Write-Host "Username:"
+Write-Host "Your username is:"
 Write-Host $webAppUsername -ForegroundColor Cyan
-Write-Host "Password:"
-Write-Host $webAppPassword -ForegroundColor Cyan
+Write-Host "Your password can be found in ./.azure/$azureEnvName/.env" 

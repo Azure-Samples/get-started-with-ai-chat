@@ -1,7 +1,7 @@
 # Prompt for username and password
 # Prompt for username with validation
 do {
-    $username = Read-Host -Prompt 'Create a new username (no spaces, at least 1 character)'
+    $username = Read-Host -Prompt 'Create a new username for the web app (no spaces, at least 1 character)'
     $usernameInvalid = $false
     if ([string]::IsNullOrWhiteSpace($username)) {
         Write-Warning "Username cannot be empty or consist only of whitespace."
@@ -14,7 +14,7 @@ do {
 
 # Prompt for password with validation
 do {
-    $password = Read-Host -Prompt 'Create a new password (no spaces, at least 1 character)' -AsSecureString
+    $password = Read-Host -Prompt 'Create a new password for the web app (no spaces, at least 1 character)' -AsSecureString
     $passwordInvalid = $false
     if ($password.Length -eq 0) {
         Write-Warning "Password cannot be empty."
