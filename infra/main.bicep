@@ -406,7 +406,7 @@ output AZURE_AI_EMBED_DEPLOYMENT_NAME string = embeddingDeploymentName
 output AZURE_AI_SEARCH_INDEX_NAME string = aiSearchIndexName
 output AZURE_AI_SEARCH_ENDPOINT string = searchServiceEndpoint
 output AZURE_AI_EMBED_DIMENSIONS string = embeddingDeploymentDimensions
-output AZURE_EXISTING_AIPROJECT_ENDPOINT string = projectEndpoint
+output AZURE_AI_SEARCH_ENDPOINT string = projectEndpoint
 output ENABLE_AZURE_MONITOR_TRACING bool = enableAzureMonitorTracing
 output AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED bool = azureTracingGenAIContentRecordingEnabled
 

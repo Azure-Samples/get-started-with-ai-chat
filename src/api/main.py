@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import fastapi
 from azure.ai.projects.aio import AIProjectClient
 from azure.ai.inference.aio import ChatCompletionsClient, EmbeddingsClient
-from azure.identity import AzureDeveloperCliCredential, ManagedIdentityCredential
+from azure.identity import AzureCliCredential, ManagedIdentityCredential
 from dotenv import load_dotenv
 from fastapi.staticfiles import StaticFiles
 
@@ -22,21 +22,21 @@ enable_trace = False
 
 @contextlib.asynccontextmanager
 async def lifespan(app: fastapi.FastAPI):
-    azure_credential: Union[AzureDeveloperCliCredential, ManagedIdentityCredential]
+    azure_credential: Union[AzureCliCredential, ManagedIdentityCredential]
     if not os.getenv("RUNNING_IN_PRODUCTION"):
         if tenant_id := os.getenv("AZURE_TENANT_ID"):
-            logger.info("Using AzureDeveloperCliCredential with tenant_id %s", tenant_id)
-            azure_credential = AzureDeveloperCliCredential(tenant_id=tenant_id)
+            logger.info("Using AzureCliCredential with tenant_id %s", tenant_id)
+            azure_credential = AzureCliCredential(tenant_id=tenant_id)
         else:
-            logger.info("Using AzureDeveloperCliCredential")
-            azure_credential = AzureDeveloperCliCredential()
+            logger.info("Using AzureCliCredential")
+            azure_credential = AzureCliCredential()
     else:
         # User-assigned identity was created and set in api.bicep
         user_identity_client_id = os.getenv("AZURE_CLIENT_ID")
         logger.info("Using ManagedIdentityCredential with client_id %s", user_identity_client_id)
         azure_credential = ManagedIdentityCredential(client_id=user_identity_client_id)
 
-    endpoint = os.environ["AZURE_EXISTING_AIPROJECT_ENDPOINT"]
+    endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
     project = AIProjectClient(
         credential=azure_credential,
         endpoint=endpoint,
