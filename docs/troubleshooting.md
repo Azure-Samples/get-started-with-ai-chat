@@ -46,6 +46,6 @@ This guide provides solutions to common issues you may encounter when deploying 
 
 If you continue to experience issues after trying these solutions:
 
-1. Check the [Azure AI Foundry documentation](https://learn.microsoft.com/azure/ai-foundry/)
+1. Check the [Microsoft Foundry documentation](https://learn.microsoft.com/azure/ai-foundry/)
 2. Review the [Azure Container Apps troubleshooting guide](https://learn.microsoft.com/azure/container-apps/troubleshooting)
 3. Consult the [Azure Developer CLI reference](https://learn.microsoft.com/azure/developer/azure-developer-cli/reference)
