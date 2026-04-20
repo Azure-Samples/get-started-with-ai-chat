@@ -1,0 +1,39 @@
+name: Notify Teams on New Issue
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send message to Teams
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": "New GitHub Issue",
+            "themeColor": "0076D7",
+            "title": "🚨 New Issue Created",
+            "sections": [{
+              "activityTitle": "${{ github.event.issue.title }}",
+              "activitySubtitle": "Repo: ${{ github.repository }}",
+              "facts": [
+                { "name": "Author", "value": "${{ github.event.issue.user.login }}" },
+                { "name": "Issue #", "value": "${{ github.event.issue.number }}" }
+              ],
+              "markdown": true
+            }],
+            "potentialAction": [{
+              "@type": "OpenUri",
+              "name": "View Issue",
+              "targets": [{
+                "os": "default",
+                "uri": "${{ github.event.issue.html_url }}"
+              }]
+            }]
+          }' \
+          ${{ secrets.TEAMS_WEBHOOK_URL }}
