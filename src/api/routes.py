@@ -78,10 +78,8 @@ def serialize_sse_event(data: Dict) -> str:
 @router.get("/", response_class=HTMLResponse)
 async def index_name(request: Request, _ = auth_dependency):
     return templates.TemplateResponse(
-        "index.html", 
-        {
-            "request": request,
-        }
+        request=request,
+        name="index.html"
     )
 
 @router.post("/chat")
