@@ -14,15 +14,114 @@ Provision a fresh Azure environment end-to-end and verify the app starts success
 When the skill is triggered, **always re-read this SKILL.md file** from disk before
 executing, in case it has been updated since the last run.
 
-Then **print the full list of steps** so the user knows what to expect:
+Then proceed to **Step 1 (Choose environment name)** immediately — the user must pick
+an environment before anything else.
 
-> **Up Skill — Steps Overview**
+## Terminal usage
+
+All shell commands in this skill **must** be run using the `powershell` tool with
+`mode="sync"`. Use a short `initial_wait` (30 seconds) for quick commands like
+`az account show`, `az ad signed-in-user show`, `az role assignment list`,
+`azd env list`, `azd env new`, and `azd env set`.
+
+**Exception — `azd up` and `azd down`:** These long-running commands **must** be run
+with `mode="async"` and a short `initial_wait` (10 seconds) so the user can see
+streaming progress output in real time (just like running in a terminal). After
+launching, **poll frequently** using `read_powershell` with a **short delay (15–20
+seconds)** — this is critical so the user sees output updates as they happen, similar
+to watching the command in a terminal. Keep calling `read_powershell` in a loop
+(each call in a new response turn) until the command completes or you receive a
+completion notification. Do NOT use long delays like 120 seconds — that defeats the
+purpose of streaming output.
+
+Chain short related commands with `&&` or `;` into a single `powershell` call
+when they have no branching logic between them.
+
+## Steps
+
+### 1. Choose environment name
+
+#### 1a. Resolve existing environment
+
+First, check whether there is already a default azd environment:
+
+```powershell
+$existingEnvs = azd env list -o json 2>$null | ConvertFrom-Json
+```
+
+Find the default environment (the entry where `IsDefault` is `true` or the `DefaultEnvironment`
+field is set, depending on the azd version).
+
+#### 1b. Generate a suggested new name
+
+Regardless of whether a default environment exists, always prepare a suggested new name
+for use as a choice.
+
+Scan `$existingEnvs` for names matching the pattern `<prefix><number>` (e.g., `aichat1`,
+`test-env3`, `chat-2`). If found, take the one with the **highest number** and suggest
+the next increment (e.g., `aichat2`, `test-env4`, `chat-3`).
+
+If no numbered environments exist, generate a default name:
+
+```powershell
+$suffix = -join ((0..9) + ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') | Get-Random -Count 6)
+$suggestedName = "aichat-$suffix"
+```
+
+#### 1c. Ask the user
+
+**If a default environment was found**, present the user with choices:
+
+1. **Use the current environment `<defaultEnvName>`** — re-provision/update the existing
+   environment (first choice, include the environment name in the label)
+2. **Create a new environment `<suggestedName>`** — use the suggested new name from 1b
+3. **Enter a different name** — the user provides their own name
+
+For example:
+
+> Do you want to `azd up` the current environment **`aichat2`**, or create a new one?
+
+**If no default environment was found**, present the user with choices:
+
+1. **Use the suggested name `<suggestedName>`** — use the name generated in 1b
+2. **Enter a different name** — the user provides their own name
+
+- If the user **provides a different name**, use their name instead.
+- Environment names must be **lowercase alphanumeric and hyphens only**, max 64 characters.
+
+The resource group will be `rg-<envName>`.
+
+### 1½. Check for existing AI project (shortcut)
+
+After resolving the environment name, check whether the selected environment already has
+`AZURE_EXISTING_AIPROJECT_RESOURCE_ID` set:
+
+```powershell
+$existingProject = azd env get-value AZURE_EXISTING_AIPROJECT_RESOURCE_ID --environment $envName 2>$null
+```
+
+If the value is **non-empty**, the environment is pre-configured to use an existing AI project.
+Print the **short-path** steps overview and **jump directly to Step 8 (`azd up`)**:
+
+> **Up Skill — Steps Overview** (environment: `<envName>`, existing AI project)
 >
-> 1. Resolve subscription
-> 2. Check RBAC permissions
-> 3. Resolve region
-> 4. Check chat model quota
-> 5. Choose environment name
+> 1. ✅ Choose environment name
+> 2–7. ⏭️ Skipped (existing AI project detected)
+> 8. Run `azd up`
+> 9. Retrieve the app endpoint
+> 10. Health-check the app
+> 11. Report results
+
+If the value is **empty or not set**, print the **full-path** steps overview and continue
+to Step 2:
+
+> **Up Skill — Steps Overview** (environment: `<envName>`)
+>
+> 1. ✅ Choose environment name
+> 2. Resolve subscription
+> 3. Check RBAC permissions
+> 4. Resolve region
+> 5. Check chat model quota
 > 6. Create the azd environment
 > 7. Set subscription, region, and model overrides
 > 8. Run `azd up`
@@ -30,27 +129,7 @@ Then **print the full list of steps** so the user knows what to expect:
 > 10. Health-check the app
 > 11. Report results
 
-Then proceed to Step 1.
-
-## Terminal usage
-
-All shell commands in this skill **must** be run using the `powershell` tool with
-`mode="sync"`. Use a short `initial_wait` (30 seconds) for quick commands like
-`az account show`, `az ad signed-in-user show`, `az role assignment list`,
-`azd env list`, `azd env new`, and `azd env set`. Use a long `initial_wait`
-(600 seconds) for `azd up` and `azd down`.
-
-**Do NOT** fall back to async/background terminals to capture output.
-Run the command with `mode="sync"` and read the output directly from the
-tool response. If the command takes longer than `initial_wait`, you will be
-notified when it completes — use `read_powershell` to retrieve the output.
-
-Chain short related commands with `&&` or `;` into a single `powershell` call
-when they have no branching logic between them.
-
-## Steps
-
-### 1. Resolve subscription
+### 2. Resolve subscription
 
 Auto-detect the default Azure Subscription ID using this priority order (use the first one found):
 
@@ -68,13 +147,13 @@ If no subscription was detected, skip choice 1 and ask the user to provide one d
 
 Show the resolved subscription to the user for confirmation before proceeding.
 
-### 2. Check RBAC permissions (prerequisite)
+### 3. Check RBAC permissions (prerequisite)
 
 Verify the user has sufficient permissions to create role assignments on the subscription,
 which is required for provisioning. The user needs **Owner** or **User Access Administrator**
 — either assigned directly or inherited through a group membership.
 
-#### 2a. Check direct role assignments
+#### 3a. Check direct role assignments
 
 ```powershell
 $principalId = az ad signed-in-user show --query id -o tsv
@@ -84,10 +163,10 @@ $roles = az role assignment list --assignee $principalId --scope $subScope --que
 
 Check if `$roles` contains `Owner` or `User Access Administrator`.
 
-- If **yes**, proceed to Step 3.
-- If **no**, continue to 2b to check group-based assignments.
+- If **yes**, proceed to Step 4.
+- If **no**, continue to 3b to check group-based assignments.
 
-#### 2b. Check group-based role assignments
+#### 3b. Check group-based role assignments
 
 The user may hold the required role through a group membership. Query the user's group
 memberships and check whether any of those groups have the required roles on the subscription.
@@ -108,17 +187,17 @@ foreach ($gid in $groupIds) {
 
 Check if `$groupRoles` contains `Owner` or `User Access Administrator`.
 
-- If **yes**, proceed to Step 3.
+- If **yes**, proceed to Step 4.
 - If **no**, report the issue:
   - Show the **subscription name and ID** that failed the check
   - Show the user's current roles on the subscription
   - Explain that `azd up` will fail because the deployment creates `Microsoft.Authorization/roleAssignments`
   - Present **3 choices**:
     1. **"I just added the role — re-check"** → Re-run the RBAC check on the same subscription
-    2. **"Use a different subscription"** → Prompt the user for a new subscription ID, then go back to Step 2
+    2. **"Use a different subscription"** → Prompt the user for a new subscription ID, then go back to Step 3
     3. **"Exit"** → Stop the skill
 
-### 3. Resolve region
+### 4. Resolve region
 
 Check environment variable `AZURE_LOCATION` first. If not set,
 ask the user — must be one of: `eastus`, `eastus2`, `swedencentral`, `westus`, `westus3`.
@@ -126,13 +205,13 @@ Default to `eastus` if the user has no preference.
 
 Show the resolved region to the user for confirmation before proceeding.
 
-### 4. Check chat model quota (prerequisite)
+### 5. Check chat model quota (prerequisite)
 
 Before provisioning, verify the default chat model has sufficient quota in the selected region.
 
 **Default model:** `gpt-4o-mini` | **SKU:** `GlobalStandard` | **Required capacity:** 80
 
-#### 4a. Query quota and model availability
+#### 5a. Query quota and model availability
 
 ```powershell
 $usage = az cognitiveservices usage list --location <region> --subscription <subscriptionId> -o json | ConvertFrom-Json
@@ -141,7 +220,7 @@ $modelList = az cognitiveservices model list --location <region> --subscription 
 
 Cache both `$usage` and `$modelList` for potential reuse.
 
-#### 4b. Check default chat model quota
+#### 5b. Check default chat model quota
 
 ```powershell
 $defaultUsageName = "OpenAI.GlobalStandard.gpt-4o-mini"
@@ -150,13 +229,13 @@ $entry = $usage | Where-Object { $_.name.value -eq $defaultUsageName }
 
 If the entry exists, compute `available = limit - currentValue`.
 
-- If `available >= 80`, the default model has enough quota — **skip to Step 5**.
-- If the entry is **missing**, the model/SKU is not available in this region — continue to 4c.
-- If `available < 80`, quota is insufficient — continue to 4c.
+- If `available >= 80`, the default model has enough quota — **skip to Step 6**.
+- If the entry is **missing**, the model/SKU is not available in this region — continue to 5c.
+- If `available < 80`, quota is insufficient — continue to 5c.
 
 Report the finding to the user (e.g., "gpt-4o-mini has 40/80 quota available — insufficient").
 
-#### 4c. Find alternative chat models
+#### 5c. Find alternative chat models
 
 From the quota usage list, find all GPT entries with `Global` or `GlobalStandard` SKUs
 that have sufficient available quota:
@@ -172,7 +251,7 @@ For each candidate, **cross-reference with `$modelList`** to confirm the model i
 deployable (exists with format `OpenAI` and is not retired). Discard any candidate not
 confirmed by the model list.
 
-#### 4d. Rank chat model candidates
+#### 5d. Rank chat model candidates
 
 Use this preference order (higher is better):
 
@@ -185,7 +264,7 @@ Use this preference order (higher is better):
 
 Within the same model name, prefer `GlobalStandard` over `Global`.
 
-#### 4e. Suggest the best alternative
+#### 5e. Suggest the best alternative
 
 Present the top candidate to the user with:
 
@@ -195,7 +274,7 @@ Present the top candidate to the user with:
 
 Ask for confirmation before proceeding.
 
-#### 4f. Resolve chat model version
+#### 5f. Resolve chat model version
 
 For the selected model, look up the version from the model list:
 
@@ -211,47 +290,18 @@ If only preview versions exist, warn the user before proceeding.
 
 Store the resolved chat model name, SKU, and version for use in Step 7.
 
-#### 4g. No chat model quota available
+#### 5g. No chat model quota available
 
 If **no** GPT model in `Global` or `GlobalStandard` has sufficient quota (≥ 80) in the
 selected region, stop and report the issue. Suggest the user try a different region or
 request a quota increase.
 
-### 5. Choose environment name
-
-Look up the user's existing azd environments to suggest a smart name:
-
-```powershell
-$existingEnvs = azd env list -o json 2>$null | ConvertFrom-Json
-```
-
-#### 5a. Generate a suggested name
-
-Scan `$existingEnvs` for names matching the pattern `<prefix><number>` (e.g., `aichat1`,
-`test-env3`, `chat-2`). If found, take the one with the **highest number** and suggest
-the next increment (e.g., `aichat2`, `test-env4`, `chat-3`).
-
-If no numbered environments exist, generate a default name:
-
-```powershell
-$suffix = -join ((0..9) + ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z') | Get-Random -Count 6)
-$suggestedName = "aichat-$suffix"
-```
-
-#### 5b. Confirm with the user
-
-Present the suggested name and ask if they are happy with it. For example:
-
-> Suggested environment name: `aichat3`
-> Is this name OK, or would you like to use a different name?
-
-- If the user **accepts**, use the suggested name.
-- If the user **provides a different name**, use their name instead.
-- Environment names must be **lowercase alphanumeric and hyphens only**, max 64 characters.
-
-The resource group will be `rg-<envName>`.
-
 ### 6. Create the azd environment
+
+If the user chose an **existing** environment in Step 1c, skip this step — the environment
+already exists. Proceed directly to Step 7.
+
+If the user chose a **new** environment name, create it:
 
 ```powershell
 azd env new $envName --no-prompt
@@ -266,9 +316,9 @@ azd env set AZURE_SUBSCRIPTION_ID <subscriptionId> --environment $envName --no-p
 azd env set AZURE_LOCATION <region> --environment $envName --no-prompt
 ```
 
-Use the values collected in Steps 1 and 3.
+Use the values collected in Steps 2 and 4.
 
-If Step 4 determined an alternative chat model, apply the chat model overrides:
+If Step 5 determined an alternative chat model, apply the chat model overrides:
 
 ```powershell
 azd env set AZURE_AI_CHAT_MODEL_NAME "<selectedChatModel>" --environment $envName --no-prompt
@@ -283,11 +333,18 @@ azd env set AZURE_AI_CHAT_DEPLOYMENT_CAPACITY "80" --environment $envName --no-p
 
 This provisions infrastructure and deploys the app. It typically takes 10–15 minutes.
 
+Run with `mode="async"` so the user sees live streaming output:
+
 ```powershell
 azd up --environment $envName --no-prompt
 ```
 
-- If `azd up` **fails**, report the error and offer to run `azd down --environment $envName --force --purge --no-prompt` to clean up.
+After launching, **poll with short delays** — call `read_powershell` with a **15–20 second
+delay** on each turn, and show the user whatever new output appeared. Repeat in a loop
+(one `read_powershell` per response turn) until the command completes. This gives the
+user a near-real-time view of provisioning progress. Do NOT use 120-second delays.
+
+- If `azd up` **fails**, report the error and offer to run `azd down --environment $envName --force --purge --no-prompt` (also `mode="async"`) to clean up.
 - If `azd up` **succeeds**, proceed to the health check.
 
 ### 9. Retrieve the app endpoint
