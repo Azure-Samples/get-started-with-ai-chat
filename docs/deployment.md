@@ -249,7 +249,11 @@ The default for the model capacity in deployment is 80k tokens for chat model an
 
 ### Deploying with AZD
 
-Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure following the following steps.
+Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure using one of the methods below.
+
+#### Option A: Direct `azd up` (5–20 minutes)
+
+If you have experience with `azd` templates, run `azd up` directly. This is the fastest path.
 
 1. (Optional) If you would like to customize the deployment to [disable resources](deploy_customization.md#enabling-and-disabling-resources-provision), [customize resource names](deploy_customization.md#customizing-resource-names), [customize the models](deploy_customization.md#customizing-model-deployments) or [increase quota](deploy_customization.md#setting-models-capacity-and-deployment-sku), you can follow those steps now.
 
@@ -290,6 +294,42 @@ Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Co
 6. (Optional) You can use a local development server to test app changes locally. To do so, follow the steps in [local deployment server](#develop-with-local-development-server) after your app is deployed.
 
 7. (Optional) Follow this [tutorial](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-quick-task) to build your changes into a Docker image and deploy to Azure Container App.
+
+#### Option B: Copilot-assisted `/up` (≈40 minutes)
+
+If you're new to `azd` templates or Azure deployments and want guided assistance,
+you can use the GitHub Copilot CLI to walk you through the entire process interactively.
+
+**Install the Copilot CLI:**
+
+```shell
+npm install -g @github/copilot-cli
+```
+
+> For more installation options, see the [Copilot CLI documentation](https://docs.github.com/en/copilot/github-copilot-in-the-cli).
+
+**Run the guided deployment:**
+
+1. Launch the Copilot CLI in your terminal:
+
+    ```shell
+    copilot
+    ```
+
+2. Type `/up` and press Enter. Copilot will guide you through each step:
+    - **Choose an environment name** — pick an existing environment or create a new one
+    - **Resolve subscription** — detect and confirm your Azure subscription
+    - **Check RBAC permissions** — verify you have Owner or User Access Administrator role
+    - **Select a region** — choose from supported Azure regions
+    - **Check model quota** — ensure sufficient GPT model capacity is available
+    - **Provision and deploy** — run `azd up` with live streaming output
+    - **Health-check** — verify the deployed app is responding
+
+3. Allow about 40 minutes for the full interactive experience. Copilot will present a
+   results summary at the end with your app URL and deployment status.
+
+See [up-example.md](../.github/skills/up/up-example.md) for a sample of what the
+`/up` interaction looks like.
 
 This guide provides step-by-step instructions for deploying your application using Azure Container Registry (ACR) and Azure Container Apps.
 

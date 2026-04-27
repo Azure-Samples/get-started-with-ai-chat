@@ -46,12 +46,38 @@ For a more comprehensive list of best practices and security recommendations for
         
 ## Getting Started
 
-### Quick Deploy
-
 | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/get-started-with-ai-chat) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/Azure-Samples/get-started-with-ai-chat) |
 |---|---|
 
-Github Codespaces and Dev Containers both allow you to download and deploy the code for development. You can also continue with local development. Once you have selected your environment, [click here to launch the development and deployment guide](./docs/deployment.md)
+1. Click `Open in GitHub Codespaces` or `Dev Containers` button above
+2. Wait for the environment to load
+3. Deploy to Azure — choose one of the options below:
+
+   #### Option A: `azd up` (5–20 minutes)
+
+   If you have experience with `azd` templates, run directly in the terminal:
+
+   ```bash
+   azd up
+   ```
+
+   Follow the prompts to select your Azure subscription and region, then wait for
+   deployment to complete — you'll get a web app URL when finished.
+
+   #### Option B: Copilot-assisted `/up` (≈40 minutes)
+
+   If you're new to `azd` templates and want guided assistance, use the Copilot CLI:
+
+   ```bash
+   copilot
+   ```
+
+   Then type `/up` in the Copilot CLI. Copilot will walk you through each step
+   interactively — checking prerequisites (RBAC, model quota), selecting your
+   subscription and region, provisioning infrastructure, and health-checking the
+   deployed app. Allow about 40 minutes for the full interactive experience.
+   See [up-example.md](.github/skills/up/up-example.md) for a sample interaction.
+
 
 **After deployment, try these [sample questions](./docs/sample_questions.md) to test your web application.**
 
