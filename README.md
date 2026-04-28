@@ -64,7 +64,9 @@ For a more comprehensive list of best practices and security recommendations for
    Follow the prompts to select your Azure subscription and region, then wait for
    deployment to complete — you'll get a web app URL when finished.
 
-   #### Option B: Copilot-assisted `/up` (≈40 minutes)
+   #### Option B: Copilot-assisted `/up` (~40 minutes)
+
+   > ⚠️ **Important:** The `/up` skill only works in the **Copilot CLI terminal** (launched via the `copilot` command). It does **not** work in the VS Code Copilot Chat window.
 
    If you're new to `azd` templates and want guided assistance, use the Copilot CLI:
 
@@ -72,10 +74,16 @@ For a more comprehensive list of best practices and security recommendations for
    copilot
    ```
 
-   Then type `/up` in the Copilot CLI. Copilot will walk you through each step
+   Then type `/up` in the Copilot CLI:
+
+   ```
+   /up
+   ```
+
+   Copilot will walk you through each step
    interactively — checking prerequisites (RBAC, model quota), selecting your
    subscription and region, provisioning infrastructure, and health-checking the
-   deployed app. Allow about 40 minutes for the full interactive experience.
+   deployed app.
    See [up-example.md](.github/skills/up/up-example.md) for a sample interaction.
 
 

@@ -279,6 +279,39 @@ If you have experience with `azd` templates, run `azd up` directly. This is the 
 
     **NOTE!** If you get authorization failed and/or permission related errors during the deployment, please refer to the Azure account requirements in the [Prerequisites](#prerequisites) section. If you were recently granted these permissions, it may take a few minutes for the authorization to apply.
 
+#### Option B: Copilot-assisted `/up` (~40 minutes)
+
+> ⚠️ **Important:** The `/up` skill only works in the **Copilot CLI terminal** (launched via the `copilot` command). It does **not** work in the VS Code Copilot Chat window.
+
+If you're new to `azd` templates and want guided assistance, use the Copilot CLI:
+
+1. Install the Copilot CLI (if not already installed):
+
+    ```bash
+    npm install -g @github/copilot-cli
+    ```
+
+2. Launch the Copilot CLI in the terminal:
+
+    ```bash
+    copilot
+    ```
+
+3. Once the Copilot CLI is running, type:
+
+    ```
+    /up
+    ```
+
+    Copilot will walk you through each step interactively — checking prerequisites
+    (RBAC, model quota), selecting your subscription and region, provisioning
+    infrastructure, and health-checking the deployed app.
+    Follow the prompts and wait for deployment to complete. You'll get a web app URL when finished.
+
+    See [up-example.md](../.github/skills/up/up-example.md) for a sample interaction.
+
+#### After deployment
+
 4. When `azd` has finished deploying, you'll see an endpoint URI in the command output. Visit that URI, and you should see the app! 🎉
 
     - You can view information about your deployment with:
@@ -294,42 +327,6 @@ If you have experience with `azd` templates, run `azd up` directly. This is the 
 6. (Optional) You can use a local development server to test app changes locally. To do so, follow the steps in [local deployment server](#develop-with-local-development-server) after your app is deployed.
 
 7. (Optional) Follow this [tutorial](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tutorial-quick-task) to build your changes into a Docker image and deploy to Azure Container App.
-
-#### Option B: Copilot-assisted `/up` (≈40 minutes)
-
-If you're new to `azd` templates or Azure deployments and want guided assistance,
-you can use the GitHub Copilot CLI to walk you through the entire process interactively.
-
-**Install the Copilot CLI:**
-
-```shell
-npm install -g @github/copilot-cli
-```
-
-> For more installation options, see the [Copilot CLI documentation](https://docs.github.com/en/copilot/github-copilot-in-the-cli).
-
-**Run the guided deployment:**
-
-1. Launch the Copilot CLI in your terminal:
-
-    ```shell
-    copilot
-    ```
-
-2. Type `/up` and press Enter. Copilot will guide you through each step:
-    - **Choose an environment name** — pick an existing environment or create a new one
-    - **Resolve subscription** — detect and confirm your Azure subscription
-    - **Check RBAC permissions** — verify you have Owner or User Access Administrator role
-    - **Select a region** — choose from supported Azure regions
-    - **Check model quota** — ensure sufficient GPT model capacity is available
-    - **Provision and deploy** — run `azd up` with live streaming output
-    - **Health-check** — verify the deployed app is responding
-
-3. Allow about 40 minutes for the full interactive experience. Copilot will present a
-   results summary at the end with your app URL and deployment status.
-
-See [up-example.md](../.github/skills/up/up-example.md) for a sample of what the
-`/up` interaction looks like.
 
 This guide provides step-by-step instructions for deploying your application using Azure Container Registry (ACR) and Azure Container Apps.
 
