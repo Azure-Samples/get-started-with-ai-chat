@@ -22,25 +22,31 @@ enable_trace = False
 
 @contextlib.asynccontextmanager
 async def lifespan(app: fastapi.FastAPI):
-    azure_credential: Union[AzureDeveloperCliCredential, ManagedIdentityCredential]
+    # In development mode, use mocks directly
     if not os.getenv("RUNNING_IN_PRODUCTION"):
-        if tenant_id := os.getenv("AZURE_TENANT_ID"):
-            logger.info("Using AzureDeveloperCliCredential with tenant_id %s", tenant_id)
-            azure_credential = AzureDeveloperCliCredential(tenant_id=tenant_id)
-        else:
-            logger.info("Using AzureDeveloperCliCredential")
-            azure_credential = AzureDeveloperCliCredential()
+        logger.info("🔧 Development mode: Using mock Azure clients")
+        from .mock_clients import MockAIProjectClient, MockChatCompletionsClient, MockEmbeddingsClient
+        
+        endpoint = os.environ.get("AZURE_EXISTING_AIPROJECT_ENDPOINT", "http://localhost:8000")
+        project = MockAIProjectClient(credential=None, endpoint=endpoint)
+        azure_credential = None
     else:
+        azure_credential: Union[AzureDeveloperCliCredential, ManagedIdentityCredential]
         # User-assigned identity was created and set in api.bicep
         user_identity_client_id = os.getenv("AZURE_CLIENT_ID")
         logger.info("Using ManagedIdentityCredential with client_id %s", user_identity_client_id)
         azure_credential = ManagedIdentityCredential(client_id=user_identity_client_id)
 
-    endpoint = os.environ["AZURE_EXISTING_AIPROJECT_ENDPOINT"]
-    project = AIProjectClient(
-        credential=azure_credential,
-        endpoint=endpoint,
-    )
+        endpoint = os.environ["AZURE_EXISTING_AIPROJECT_ENDPOINT"]
+        
+        try:
+            project = AIProjectClient(
+                credential=azure_credential,
+                endpoint=endpoint,
+            )
+        except Exception as e:
+            logger.error("Failed to connect to AIProjectClient: %s", str(e))
+            raise
 
     if enable_trace:
         application_insights_connection_string = ""
@@ -57,22 +63,37 @@ async def lifespan(app: fastapi.FastAPI):
             from azure.monitor.opentelemetry import configure_azure_monitor
             configure_azure_monitor(connection_string=application_insights_connection_string)
 
+    # For development, use mocks directly
+    if not os.getenv("RUNNING_IN_PRODUCTION"):
+        from .mock_clients import MockChatCompletionsClient, MockEmbeddingsClient
+        endpoint = os.environ.get("AZURE_EXISTING_AIPROJECT_ENDPOINT", "http://localhost:8000")
+        
+        chat = MockChatCompletionsClient(
+            endpoint=endpoint,
+            credential=None,
+            credential_scopes=["https://ai.azure.com/.default"],
+        )
+        embed = MockEmbeddingsClient(
+            endpoint=endpoint,
+            credential=None,
+            credential_scopes=["https://ai.azure.com/.default"],
+        )
+    else:
+        # Project endpoint has the form:   https://your-ai-services-account-name.services.ai.azure.com/api/projects/your-project-name
+        # Inference endpoint has the form: https://your-ai-services-account-name.services.ai.azure.com/models
+        # Strip the "/api/projects/your-project-name" part and replace with "/models":
+        inference_endpoint = f"https://{urlparse(endpoint).netloc}/models"
 
-    # Project endpoint has the form:   https://your-ai-services-account-name.services.ai.azure.com/api/projects/your-project-name
-    # Inference endpoint has the form: https://your-ai-services-account-name.services.ai.azure.com/models
-    # Strip the "/api/projects/your-project-name" part and replace with "/models":
-    inference_endpoint = f"https://{urlparse(endpoint).netloc}/models"
-
-    chat =  ChatCompletionsClient(
-        endpoint=inference_endpoint,
-        credential=azure_credential,
-        credential_scopes=["https://ai.azure.com/.default"],
-    )
-    embed =  EmbeddingsClient(
-        endpoint=inference_endpoint,
-        credential=azure_credential,
-        credential_scopes=["https://ai.azure.com/.default"],
-    )
+        chat =  ChatCompletionsClient(
+            endpoint=inference_endpoint,
+            credential=azure_credential,
+            credential_scopes=["https://ai.azure.com/.default"],
+        )
+        embed =  EmbeddingsClient(
+            endpoint=inference_endpoint,
+            credential=azure_credential,
+            credential_scopes=["https://ai.azure.com/.default"],
+        )
 
     endpoint = os.environ.get('AZURE_AI_SEARCH_ENDPOINT')
     search_index_manager = None
