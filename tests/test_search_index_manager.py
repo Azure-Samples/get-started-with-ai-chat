@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft. All rights reserved.
+# TESTCopyright (c) Microsoft. All rights reserved.
 # Licensed under the MIT license.
 # See LICENSE file in the project root for full license information.
 import csv
@@ -362,3 +362,4 @@ class TestSearchIndexManager(unittest.IsolatedAsyncioTestCase):
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.testName']
     unittest.main()
+

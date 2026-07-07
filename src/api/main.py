@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft. All rights reserved.
+#     Copyright (c) Microsoft. All rights reserved.
 # Licensed under the MIT license.
 # See LICENSE file in the project root for full license information.
 import contextlib
@@ -145,3 +145,4 @@ def create_app():
     app.include_router(routes.router)
 
     return app
+
