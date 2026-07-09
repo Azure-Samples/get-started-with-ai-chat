@@ -7,7 +7,7 @@ azure-ai-inference==1.0.0b9
 azure-ai-projects==1.0.0
 azure-search-documents
 
-azure-core==1.34.0  # other versions might not compatible
+azure-core==1.38.0  # other versions might not compatible
 azure-core-tracing-opentelemetry
 azure-monitor-opentelemetry==1.6.9 # version such as 1.6.11 isn't compatible
 azure-search-documents
