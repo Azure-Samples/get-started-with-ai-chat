@@ -4,12 +4,17 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: read
+
 jobs:
   notify:
     runs-on: ubuntu-latest
 
     steps:
       - name: Send message to Teams
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
           curl -H "Content-Type: application/json" \
           -d '{
@@ -19,7 +24,7 @@ jobs:
             "themeColor": "0076D7",
             "title": "🚨 New Issue Created",
             "sections": [{
-              "activityTitle": "${{ github.event.issue.title }}",
+              "activityTitle": "'"$ISSUE_TITLE"'",
               "activitySubtitle": "Repo: ${{ github.repository }}",
               "facts": [
                 { "name": "Author", "value": "${{ github.event.issue.user.login }}" },
